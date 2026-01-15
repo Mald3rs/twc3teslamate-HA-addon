@@ -2,7 +2,7 @@
 
 Home Assistant add-on that simulates a Tesla Wall Connector Gen3 API using data from Teslamate via MQTT. This enables integrations like [evcc](https://evcc.io/) to work with Tesla vehicles.
 
-Based on [twc3teslamate](https://github.com/Haveacry/twc3teslamate) by Haveacry.
+Based on [twc3teslamate](https://github.com/Haveacry/twc3teslamate) by Haveacry. Home Assistant add-on conversion by [Claude Code](https://claude.ai/code).
 
 ## Installation
 
