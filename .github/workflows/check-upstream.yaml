@@ -1,0 +1,66 @@
+name: Check Upstream Updates
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6:00 UTC
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get upstream latest commit
+        id: upstream
+        run: |
+          UPSTREAM_SHA=$(git ls-remote https://github.com/Haveacry/twc3teslamate.git HEAD | cut -f1)
+          echo "sha=${UPSTREAM_SHA}" >> $GITHUB_OUTPUT
+          echo "short_sha=${UPSTREAM_SHA:0:7}" >> $GITHUB_OUTPUT
+
+      - name: Get stored upstream SHA
+        id: stored
+        run: |
+          if [ -f .upstream-sha ]; then
+            echo "sha=$(cat .upstream-sha)" >> $GITHUB_OUTPUT
+          else
+            echo "sha=none" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if update needed
+        id: check
+        run: |
+          if [ "${{ steps.upstream.outputs.sha }}" != "${{ steps.stored.outputs.sha }}" ]; then
+            echo "update=true" >> $GITHUB_OUTPUT
+          else
+            echo "update=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update version
+        if: steps.check.outputs.update == 'true'
+        run: |
+          # Get current version and increment patch
+          CURRENT=$(grep '^version:' twc3teslamate/config.yaml | sed 's/version: *"\(.*\)"/\1/')
+          MAJOR=$(echo $CURRENT | cut -d. -f1)
+          MINOR=$(echo $CURRENT | cut -d. -f2)
+          PATCH=$(echo $CURRENT | cut -d. -f3)
+          NEW_PATCH=$((PATCH + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+
+          # Update config.yaml
+          sed -i "s/version: \".*\"/version: \"${NEW_VERSION}\"/" twc3teslamate/config.yaml
+
+          # Store new upstream SHA
+          echo "${{ steps.upstream.outputs.sha }}" > .upstream-sha
+
+          echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+
+      - name: Commit and push
+        if: steps.check.outputs.update == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add twc3teslamate/config.yaml .upstream-sha
+          git commit -m "Bump version to ${NEW_VERSION} (upstream: ${{ steps.upstream.outputs.short_sha }})"
+          git push
