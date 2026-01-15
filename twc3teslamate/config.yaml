@@ -1,0 +1,30 @@
+name: TWC3 Teslamate
+description: Simulates Tesla Wall Connector Gen3 API using Teslamate MQTT data
+version: "1.0.0"
+slug: twc3teslamate
+init: false
+arch:
+  - amd64
+  - aarch64
+ports:
+  80/tcp: 8099
+ports_description:
+  80/tcp: TWC3 API endpoint
+map:
+  - config:rw
+options:
+  mqtt_host: ""
+  mqtt_port: 1883
+  mqtt_username: ""
+  mqtt_password: ""
+  teslamate_car_id: 1
+  teslamate_geo_home: "Home"
+  teslamate_namespace: ""
+schema:
+  mqtt_host: str
+  mqtt_port: port
+  mqtt_username: str?
+  mqtt_password: password?
+  teslamate_car_id: int
+  teslamate_geo_home: str
+  teslamate_namespace: str?
